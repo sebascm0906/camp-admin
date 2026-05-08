@@ -8,7 +8,8 @@ import { FormsPage } from "../features/forms/FormsPage";
 import { FormSubmissionsPage } from "../features/forms/FormSubmissionsPage";
 import { ImportsPage } from "../features/imports/ImportsPage";
 import { InvitationsPage } from "../features/invitations/InvitationsPage";
-import { PlatformHomePage } from "../features/platform/PlatformHomePage";
+import { NewCampPage } from "../features/platform/NewCampPage";
+import { PlatformCampsPage } from "../features/platform/PlatformCampsPage";
 import { PlatformLayout } from "../features/platform/PlatformLayout";
 import { UsersPage } from "../features/users/UsersPage";
 import { WeeksPage } from "../features/weeks/WeeksPage";
@@ -46,7 +47,9 @@ export function AppRouter() {
           </SessionGate>
         }
       >
-        <Route path="/platform" element={<PlatformHomePage />} />
+        <Route path="/platform" element={<Navigate to="/platform/camps" replace />} />
+        <Route path="/platform/camps" element={<PlatformCampsPage />} />
+        <Route path="/platform/new-camp" element={<NewCampPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin" replace />} />
