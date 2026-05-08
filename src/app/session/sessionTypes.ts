@@ -14,6 +14,7 @@ export type AuthenticatedUser = {
   is_active: boolean;
   effective_membership_id?: string | null;
   effective_camp_id?: string | null;
+  capabilities?: string[];
   memberships: Membership[];
 };
 

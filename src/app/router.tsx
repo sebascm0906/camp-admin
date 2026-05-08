@@ -8,8 +8,11 @@ import { FormsPage } from "../features/forms/FormsPage";
 import { FormSubmissionsPage } from "../features/forms/FormSubmissionsPage";
 import { ImportsPage } from "../features/imports/ImportsPage";
 import { InvitationsPage } from "../features/invitations/InvitationsPage";
+import { PlatformHomePage } from "../features/platform/PlatformHomePage";
+import { PlatformLayout } from "../features/platform/PlatformLayout";
 import { UsersPage } from "../features/users/UsersPage";
 import { WeeksPage } from "../features/weeks/WeeksPage";
+import { RoleRedirect } from "./session/RoleRedirect";
 import { SessionGate } from "./session/SessionGate";
 
 export function AppRouter() {
@@ -23,8 +26,8 @@ export function AppRouter() {
           </SessionGate>
         }
       >
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<RoleRedirect />} />
+        <Route path="/admin" element={<RoleRedirect />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/invitations" element={<InvitationsPage />} />
@@ -36,7 +39,17 @@ export function AppRouter() {
         <Route path="/form-submissions" element={<FormSubmissionsPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route
+        element={
+          <SessionGate>
+            <PlatformLayout />
+          </SessionGate>
+        }
+      >
+        <Route path="/platform" element={<PlatformHomePage />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/admin" replace />} />
     </Routes>
   );
 }
