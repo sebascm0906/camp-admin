@@ -40,6 +40,19 @@ function formatCamperName(camper: CamperListEntry) {
   return name || "No name";
 }
 
+function readCsvFile(file: File) {
+  if (typeof file.text === "function") {
+    return file.text();
+  }
+
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file);
+  });
+}
+
 function WeekCampersView({
   campId,
   scope,
@@ -54,6 +67,7 @@ function WeekCampersView({
   const [importError, setImportError] = useState<string | null>(null);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importCsv, setImportCsv] = useState("");
+  const [importFileName, setImportFileName] = useState<string | null>(null);
   const [replaceExisting, setReplaceExisting] = useState(false);
 
   const activeWeek = scope.activeWeek;
@@ -109,6 +123,7 @@ function WeekCampersView({
       setImportError(null);
       setIsImportDialogOpen(false);
       setImportCsv("");
+      setImportFileName(null);
       setReplaceExisting(false);
       await queryClient.invalidateQueries({ queryKey });
     },
@@ -135,6 +150,21 @@ function WeekCampersView({
     }
 
     await createMutation.mutateAsync(payload as CamperCreate);
+  }
+
+  async function handleImportFile(file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const csvText = await readCsvFile(file);
+      setImportCsv(csvText);
+      setImportFileName(file.name);
+      setImportError(null);
+    } catch {
+      setImportError("Unable to read CSV file.");
+    }
   }
 
   const tableRows = useMemo(
@@ -275,6 +305,26 @@ function WeekCampersView({
               minRows={10}
               fullWidth
             />
+            <Stack spacing={0.75}>
+              <Button variant="outlined" component="label">
+                Choose CSV file
+                <input
+                  aria-label="CSV file"
+                  type="file"
+                  accept=".csv,text/csv"
+                  hidden
+                  onChange={(event) => {
+                    void handleImportFile(event.target.files?.[0] ?? null);
+                    event.target.value = "";
+                  }}
+                />
+              </Button>
+              {importFileName ? (
+                <Typography color="text.secondary">
+                  Loaded {importFileName}
+                </Typography>
+              ) : null}
+            </Stack>
             <FormControlLabel
               control={
                 <Checkbox

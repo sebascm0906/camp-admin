@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 import {
   createCamper,
+  importCampers,
   listCampers,
   updateCamper,
   type CamperDirectory,
@@ -26,6 +27,7 @@ vi.mock("../../app/context/useCampContext", () => ({
 const mockedListCampers = vi.mocked(listCampers);
 const mockedCreateCamper = vi.mocked(createCamper);
 const mockedUpdateCamper = vi.mocked(updateCamper);
+const mockedImportCampers = vi.mocked(importCampers);
 const mockedUseCampContext = vi.mocked(useCampContext);
 
 function renderPage() {
@@ -252,6 +254,11 @@ describe("CampersPage", () => {
         notes: updatedDetail.notes,
       };
     });
+    mockedImportCampers.mockResolvedValue({
+      created_count: 2,
+      skipped_count: 0,
+      errors: [],
+    });
   });
 
   afterEach(() => {
@@ -337,5 +344,33 @@ describe("CampersPage", () => {
     });
 
     expect(await screen.findByText("green")).toBeInTheDocument();
+  });
+
+  it("loads camper import CSV from a selected file", async () => {
+    renderPage();
+    const user = userEvent.setup();
+
+    await screen.findByText("Avery Stone");
+    await user.click(screen.getByRole("button", { name: /import csv/i }));
+
+    const dialog = await screen.findByRole("dialog", { name: /import campers/i });
+    const file = new File(
+      ["Name,Age,Group,Swim Band\nJane Doe,7,Lazer 1,Red\n"],
+      "daycamp-roster.csv",
+      { type: "text/csv" },
+    );
+
+    await user.upload(within(dialog).getByLabelText(/csv file/i), file);
+
+    expect(await within(dialog).findByText(/daycamp-roster.csv/i)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: /run import/i }));
+
+    await waitFor(() => {
+      expect(mockedImportCampers).toHaveBeenCalledWith("camp-1", "week-daycamp-1", {
+        csv_text: "Name,Age,Group,Swim Band\nJane Doe,7,Lazer 1,Red\n",
+        replace_existing: false,
+        source: "camp-admin",
+      });
+    });
   });
 });
