@@ -6,6 +6,7 @@ import { ActivitiesPage } from "../features/activities/ActivitiesPage";
 import { CampersPage } from "../features/campers/CampersPage";
 import { FormsPage } from "../features/forms/FormsPage";
 import { FormSubmissionsPage } from "../features/forms/FormSubmissionsPage";
+import { ImportsPage } from "../features/imports/ImportsPage";
 import { InvitationsPage } from "../features/invitations/InvitationsPage";
 import { UsersPage } from "../features/users/UsersPage";
 import { WeeksPage } from "../features/weeks/WeeksPage";
@@ -28,6 +29,7 @@ export function AppRouter() {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/invitations" element={<InvitationsPage />} />
         <Route path="/weeks" element={<WeeksPage />} />
+        <Route path="/imports" element={<ImportsPage />} />
         <Route path="/campers" element={<CampersPage />} />
         <Route path="/activities" element={<ActivitiesPage />} />
         <Route path="/forms" element={<FormsPage />} />
