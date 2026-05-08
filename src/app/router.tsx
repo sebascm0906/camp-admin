@@ -8,6 +8,7 @@ import { FormsPage } from "../features/forms/FormsPage";
 import { FormSubmissionsPage } from "../features/forms/FormSubmissionsPage";
 import { InvitationsPage } from "../features/invitations/InvitationsPage";
 import { UsersPage } from "../features/users/UsersPage";
+import { WeeksPage } from "../features/weeks/WeeksPage";
 import { SessionGate } from "./session/SessionGate";
 
 export function AppRouter() {
@@ -26,6 +27,7 @@ export function AppRouter() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/invitations" element={<InvitationsPage />} />
+        <Route path="/weeks" element={<WeeksPage />} />
         <Route path="/campers" element={<CampersPage />} />
         <Route path="/activities" element={<ActivitiesPage />} />
         <Route path="/forms" element={<FormsPage />} />
