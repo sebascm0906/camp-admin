@@ -19,6 +19,7 @@ import {
   sortWeeksInTimelineOrder,
 } from "../../api/weeks";
 import { useSession } from "../session/useSession";
+import { useSupportContext } from "../support/supportContext";
 
 type CampContextValue = {
   currentCamp: Camp | null;
@@ -72,10 +73,13 @@ function normalizeContext(context: CampContextState, weeks: Week[]) {
 
 export function CampProvider({ children }: { children: ReactNode }) {
   const { session } = useSession();
+  const support = useSupportContext();
   const effectiveCampId =
-    session.phase === "ready"
+    support.selectedCamp?.id ??
+    (session.phase === "ready"
       ? session.user.effective_camp_id ?? session.user.camp_id
-      : null;
+      : null);
+  const isSupportActive = Boolean(support.selectedCamp);
   const [state, setState] = useState<Omit<
     CampContextValue,
     "setSelectedDaycampWeekId" | "setSelectedOvernightWeekId" | "refresh"
@@ -130,11 +134,18 @@ export function CampProvider({ children }: { children: ReactNode }) {
       });
 
       try {
-        const [camps, backendContext, loadedWeeks] = await Promise.all([
-          listCamps(),
-          getContext(),
-          listWeeks(campId),
-        ]);
+        const [camps, backendContext, loadedWeeks] = isSupportActive
+          ? [
+              support.selectedCamp
+                ? [{ id: support.selectedCamp.id, name: support.selectedCamp.name }]
+                : [],
+              {
+                active_daycamp_week_id: null,
+                active_overnight_week_id: null,
+              },
+              await listWeeks(campId),
+            ]
+          : await Promise.all([listCamps(), getContext(), listWeeks(campId)]);
 
         if (cancelled) return;
 
@@ -143,12 +154,12 @@ export function CampProvider({ children }: { children: ReactNode }) {
         const firstOvernight = weeks.find((week) => week.week_type === "overnight");
         let nextContext = backendContext;
 
-        if (!nextContext.active_daycamp_week_id && firstDaycamp) {
+        if (!isSupportActive && !nextContext.active_daycamp_week_id && firstDaycamp) {
           nextContext = await selectWeek(firstDaycamp.id);
           if (cancelled) return;
         }
 
-        if (!nextContext.active_overnight_week_id && firstOvernight) {
+        if (!isSupportActive && !nextContext.active_overnight_week_id && firstOvernight) {
           nextContext = await selectWeek(firstOvernight.id);
           if (cancelled) return;
         }
@@ -185,10 +196,33 @@ export function CampProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [effectiveCampId, refreshKey, session.phase]);
+  }, [effectiveCampId, isSupportActive, refreshKey, session.phase, support.selectedCamp]);
 
   const updateSelectedWeek = useCallback(
     async (weekId: string) => {
+      if (isSupportActive) {
+        setState((current) => ({
+          ...current,
+          ...normalizeContext(
+            {
+              active_daycamp_week_id:
+                current.weeks.find((week) => week.id === weekId)?.week_type ===
+                "daycamp"
+                  ? weekId
+                  : current.selectedDaycampWeekId,
+              active_overnight_week_id:
+                current.weeks.find((week) => week.id === weekId)?.week_type ===
+                "overnight"
+                  ? weekId
+                  : current.selectedOvernightWeekId,
+            },
+            current.weeks,
+          ),
+          error: null,
+        }));
+        return;
+      }
+
       selectionRequestId.current += 1;
       const requestId = selectionRequestId.current;
       const nextContext = await selectWeek(weekId);
@@ -203,7 +237,7 @@ export function CampProvider({ children }: { children: ReactNode }) {
         error: null,
       }));
     },
-    [],
+    [isSupportActive],
   );
 
   const refresh = useCallback(async () => {

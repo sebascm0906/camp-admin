@@ -3,6 +3,7 @@ import { vi } from "vitest";
 import { listCamps } from "../../api/camps";
 import { getContext, listWeeks, selectWeek } from "../../api/weeks";
 import { useSession } from "../session/useSession";
+import { useSupportContext } from "../support/supportContext";
 import { CampProvider } from "./campContext";
 import { useCampContext } from "./useCampContext";
 
@@ -30,11 +31,16 @@ vi.mock("../session/useSession", () => ({
   useSession: vi.fn(),
 }));
 
+vi.mock("../support/supportContext", () => ({
+  useSupportContext: vi.fn(),
+}));
+
 const mockedListCamps = vi.mocked(listCamps);
 const mockedGetContext = vi.mocked(getContext);
 const mockedListWeeks = vi.mocked(listWeeks);
 const mockedSelectWeek = vi.mocked(selectWeek);
 const mockedUseSession = vi.mocked(useSession);
+const mockedUseSupportContext = vi.mocked(useSupportContext);
 
 function buildSessionValue() {
   return {
@@ -84,6 +90,16 @@ function ContextProbe() {
 describe("CampProvider", () => {
   beforeEach(() => {
     mockedUseSession.mockReturnValue(buildSessionValue());
+    mockedUseSupportContext.mockReturnValue({
+      selectedCamp: null,
+      editMode: false,
+      reason: null,
+      isSupportActive: false,
+      startSupport: vi.fn(),
+      stopSupport: vi.fn(),
+      enableEditMode: vi.fn(),
+      disableEditMode: vi.fn(),
+    });
     mockedListCamps.mockReset();
     mockedGetContext.mockReset();
     mockedListWeeks.mockReset();

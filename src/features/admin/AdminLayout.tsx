@@ -15,6 +15,7 @@ import { useCampContext } from "../../app/context/useCampContext";
 import { useSession } from "../../app/session/useSession";
 import { useAuth } from "../auth/useAuth";
 import { WeekSelector } from "../weeks/WeekSelector";
+import { SupportModeBanner } from "../platform/SupportModeBanner";
 import { NAV_ITEMS } from "./resourceConfig";
 
 const drawerW = 240;
@@ -111,6 +112,7 @@ export function AdminLayout() {
         }}
       >
         <Toolbar />
+        <SupportModeBanner />
         <Outlet />
       </Box>
     </Box>

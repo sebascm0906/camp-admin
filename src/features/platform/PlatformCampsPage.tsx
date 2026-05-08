@@ -11,10 +11,14 @@ import {
   Typography,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { useSupportContext } from "../../app/support/supportContext";
 import { listPlatformCamps } from "../../api/platform";
 import { getErrorMessage } from "../../lib/http";
 
 export function PlatformCampsPage() {
+  const nav = useNavigate();
+  const support = useSupportContext();
   const campsQuery = useQuery({
     queryKey: ["platform", "camps"],
     queryFn: listPlatformCamps,
@@ -69,6 +73,7 @@ export function PlatformCampsPage() {
                 <TableCell>Name</TableCell>
                 <TableCell>Timezone</TableCell>
                 <TableCell>ID</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -77,6 +82,16 @@ export function PlatformCampsPage() {
                   <TableCell>{camp.name}</TableCell>
                   <TableCell>{camp.timezone || "None"}</TableCell>
                   <TableCell>{camp.id}</TableCell>
+                  <TableCell align="right">
+                    <Button
+                      onClick={() => {
+                        support.startSupport(camp);
+                        nav("/dashboard");
+                      }}
+                    >
+                      View support
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

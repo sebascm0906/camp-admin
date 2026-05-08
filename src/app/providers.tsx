@@ -4,6 +4,7 @@ import React from "react";
 import { AuthProvider } from "../features/auth/useAuth";
 import { CampProvider } from "./context/campContext";
 import { SessionProvider } from "./session/sessionContext";
+import { SupportProvider } from "./support/supportContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -105,7 +106,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         <CssBaseline />
         <AuthProvider>
           <SessionProvider>
-            <CampProvider>{children}</CampProvider>
+            <SupportProvider>
+              <CampProvider>{children}</CampProvider>
+            </SupportProvider>
           </SessionProvider>
         </AuthProvider>
       </ThemeProvider>
