@@ -15,6 +15,7 @@ import { useCampContext } from "../../app/context/useCampContext";
 import { useSession } from "../../app/session/useSession";
 import { useAuth } from "../auth/useAuth";
 import { WeekSelector } from "../weeks/WeekSelector";
+import { SupportCampSelector } from "../platform/SupportCampSelector";
 import { SupportModeBanner } from "../platform/SupportModeBanner";
 import { NAV_ITEMS } from "./resourceConfig";
 
@@ -62,6 +63,7 @@ export function AdminLayout() {
             spacing={2}
             alignItems={{ xs: "stretch", lg: "center" }}
           >
+            <SupportCampSelector />
             <WeekSelector />
             <Button
               color="inherit"

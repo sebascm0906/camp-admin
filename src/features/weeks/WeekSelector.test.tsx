@@ -67,10 +67,13 @@ describe("WeekSelector", () => {
 
     expect(
       within(daycampSelect).getAllByRole("option").map((option) => option.textContent)
-    ).toEqual(["Day Camp A", "Day Camp B"]);
+    ).toEqual([
+      "Day Camp A · Jun 3-7, 2026",
+      "Day Camp B · Jun 10-14, 2026",
+    ]);
     expect(
       within(overnightSelect).getAllByRole("option").map((option) => option.textContent)
-    ).toEqual(["Overnight A"]);
+    ).toEqual(["Overnight A · Jul 7-13, 2026"]);
   });
 
   it("persists a changed day camp selection through camp context", async () => {
