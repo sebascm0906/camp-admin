@@ -10,6 +10,7 @@ import {
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSession } from "../../app/session/useSession";
 import { useAuth } from "../auth/useAuth";
+import { CampBrand } from "../../components/CampBrand";
 
 const navItems = [
   { label: "Camps", path: "/platform/camps" },
@@ -35,16 +36,38 @@ export function PlatformLayout() {
             py: { xs: 1.5, md: 0 },
           }}
         >
-          <Stack spacing={0.25}>
-            <Typography fontWeight={800}>Platform</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Internal access · {email}
-            </Typography>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={{ xs: 1.5, sm: 3 }}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+          >
+            <CampBrand width={180} />
+            <Stack
+              spacing={0.25}
+              sx={{
+                borderLeft: { xs: 0, sm: 1 },
+                borderColor: "divider",
+                pl: { xs: 0, sm: 3 },
+                minWidth: 0,
+              }}
+            >
+              <Typography fontWeight={600}>Platform</Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ overflowWrap: "anywhere" }}
+              >
+                Internal access · {email}
+              </Typography>
+            </Stack>
           </Stack>
           <Stack
             direction="row"
             spacing={1}
-            sx={{ flexWrap: "wrap", justifyContent: { xs: "flex-start", md: "flex-end" } }}
+            sx={{
+              flexWrap: "wrap",
+              justifyContent: { xs: "flex-start", md: "flex-end" },
+            }}
           >
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;

@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { SessionProvider, useOptionalSessionContext } from "./sessionContext";
 import { useSession } from "./useSession";
+import { CampBrand } from "../../components/CampBrand";
 
 function SessionGateInner({ children }: { children?: ReactNode }) {
   const { session, retryBootstrap } = useSession();
@@ -29,6 +30,7 @@ function SessionGateInner({ children }: { children?: ReactNode }) {
         }}
       >
         <Stack alignItems="center" spacing={2}>
+          <CampBrand width={240} />
           <CircularProgress />
           <Typography>Checking your camp access...</Typography>
         </Stack>
@@ -48,6 +50,7 @@ function SessionGateInner({ children }: { children?: ReactNode }) {
       <Container maxWidth="sm" sx={{ py: 8 }}>
         <Paper sx={{ p: 4 }}>
           <Stack spacing={2}>
+            <CampBrand width={200} />
             <Typography variant="h5" fontWeight={800}>
               Access pending
             </Typography>
@@ -70,6 +73,7 @@ function SessionGateInner({ children }: { children?: ReactNode }) {
       <Container maxWidth="sm" sx={{ py: 8 }}>
         <Paper sx={{ p: 4 }}>
           <Stack spacing={2}>
+            <CampBrand width={200} />
             <Typography variant="h5" fontWeight={800}>
               Temporary sign-in issue
             </Typography>
