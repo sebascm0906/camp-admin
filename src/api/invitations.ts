@@ -17,13 +17,21 @@ export type InvitationCreate = {
   expires_at?: string | null;
 };
 
+export type InvitationMutationResult = Invitation & {
+  email_status?: "sent" | "failed" | "skipped";
+  email_error?: string | null;
+};
+
 export async function listInvitations() {
   const { data } = await api.get<Invitation[]>("/invitations");
   return data;
 }
 
 export async function createInvitation(payload: InvitationCreate) {
-  const { data } = await api.post<Invitation>("/invitations", payload);
+  const { data } = await api.post<InvitationMutationResult>(
+    "/invitations",
+    payload,
+  );
   return data;
 }
 
@@ -32,6 +40,8 @@ export async function revokeInvitation(id: string) {
 }
 
 export async function reissueInvitation(id: string) {
-  const { data } = await api.post<Invitation>(`/invitations/${id}/reissue`);
+  const { data } = await api.post<InvitationMutationResult>(
+    `/invitations/${id}/reissue`,
+  );
   return data;
 }

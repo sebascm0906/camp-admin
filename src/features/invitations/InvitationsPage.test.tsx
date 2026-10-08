@@ -258,4 +258,55 @@ describe("InvitationsPage", () => {
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
+
+  it.each([
+    ["sent", /invitation created and email sent/i],
+    ["failed", /invitation created, but the email could not be sent/i],
+    ["skipped", /invitation created, but email delivery is not configured/i],
+    [undefined, /invitation created. email delivery was not confirmed/i],
+  ] as const)(
+    "reports %s delivery accurately when creating",
+    async (emailStatus, message) => {
+      mockedCreateInvitation.mockResolvedValueOnce({
+        ...seedInvitations()[0],
+        id: "invite-new",
+        email: "new@example.com",
+        email_status: emailStatus,
+      });
+      renderPage();
+      const user = userEvent.setup();
+      await screen.findByText("pending@example.com");
+      await user.click(screen.getByRole("button", { name: /new invitation/i }));
+      const dialog = await screen.findByRole("dialog");
+      await user.type(
+        within(dialog).getByLabelText(/email/i),
+        "new@example.com",
+      );
+      await user.click(
+        within(dialog).getByRole("button", { name: /send invitation/i }),
+      );
+      expect(await screen.findByRole("alert")).toHaveTextContent(message);
+      expect(await screen.findByText("new@example.com")).toBeInTheDocument();
+    },
+  );
+
+  it("keeps the replacement ID when renewal succeeds but email fails", async () => {
+    mockedReissueInvitation.mockResolvedValueOnce({
+      ...seedInvitations()[0],
+      id: "renewed-no-email",
+      email_status: "failed",
+      email_error: "RESEND_SEND_FAILED",
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await screen.findByText("pending@example.com");
+    await user.click(screen.getByRole("button", { name: /^reissue$/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /invitation renewed, but the email could not be sent/i,
+    );
+    await user.click(screen.getByRole("button", { name: /^revoke$/i }));
+    await waitFor(() =>
+      expect(mockedRevokeInvitation).toHaveBeenCalledWith("renewed-no-email"),
+    );
+  });
 });

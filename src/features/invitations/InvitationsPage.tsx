@@ -22,6 +22,7 @@ import {
   revokeInvitation,
   type Invitation,
   type InvitationCreate,
+  type InvitationMutationResult,
 } from "../../api/invitations";
 import { getErrorMessage } from "../../lib/http";
 import { InvitationDialog } from "./InvitationDialog";
@@ -44,6 +45,7 @@ export function InvitationsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [emailWarning, setEmailWarning] = useState<string | null>(null);
 
   const invitationsQuery = useQuery({
     queryKey: ["invitations"],
@@ -64,6 +66,7 @@ export function InvitationsPage() {
       );
       setFormError(null);
       setIsDialogOpen(false);
+      showDeliveryResult(createdInvitation, "created");
     },
     onError: (error) => {
       setFormError(getErrorMessage(error, "Unable to create invitation."));
@@ -73,6 +76,28 @@ export function InvitationsPage() {
   function clearActionFeedback() {
     setActionError(null);
     setActionMessage(null);
+    setEmailWarning(null);
+  }
+
+  function showDeliveryResult(
+    result: InvitationMutationResult,
+    action: "created" | "renewed",
+  ) {
+    if (result.email_status === "sent") {
+      setActionMessage(`Invitation ${action} and email sent.`);
+    } else if (result.email_status === "failed") {
+      setEmailWarning(
+        `Invitation ${action}, but the email could not be sent. Use Reissue to try again.`,
+      );
+    } else if (result.email_status === "skipped") {
+      setEmailWarning(
+        `Invitation ${action}, but email delivery is not configured. Contact support.`,
+      );
+    } else {
+      setEmailWarning(
+        `Invitation ${action}. Email delivery was not confirmed by the server.`,
+      );
+    }
   }
 
   async function handleActionError(error: unknown) {
@@ -110,7 +135,7 @@ export function InvitationsPage() {
             : invitation,
         ),
       );
-      setActionMessage("Invitation renewed.");
+      showDeliveryResult(updatedInvitation, "renewed");
     },
     onError: handleActionError,
   });
@@ -153,6 +178,7 @@ export function InvitationsPage() {
 
       {actionError && <Alert severity="error">{actionError}</Alert>}
       {actionMessage && <Alert severity="success">{actionMessage}</Alert>}
+      {emailWarning && <Alert severity="warning">{emailWarning}</Alert>}
 
       <Paper sx={{ p: 3 }}>
         {invitationsQuery.isLoading ? (
