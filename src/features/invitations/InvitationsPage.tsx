@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   Chip,
   CircularProgress,
@@ -12,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { useState } from "react";
 import {
   createInvitation,
@@ -40,6 +42,8 @@ export function InvitationsPage() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const invitationsQuery = useQuery({
     queryKey: ["invitations"],
@@ -49,10 +53,15 @@ export function InvitationsPage() {
   const createMutation = useMutation({
     mutationFn: (payload: InvitationCreate) => createInvitation(payload),
     onSuccess: (createdInvitation) => {
-      queryClient.setQueryData<Invitation[]>(["invitations"], (current = []) => [
-        createdInvitation,
-        ...current,
-      ]);
+      queryClient.setQueryData<Invitation[]>(
+        ["invitations"],
+        (current = []) => [
+          createdInvitation,
+          ...current.filter(
+            (invitation) => invitation.id !== createdInvitation.id,
+          ),
+        ],
+      );
       setFormError(null);
       setIsDialogOpen(false);
     },
@@ -61,31 +70,57 @@ export function InvitationsPage() {
     },
   });
 
+  function clearActionFeedback() {
+    setActionError(null);
+    setActionMessage(null);
+  }
+
+  async function handleActionError(error: unknown) {
+    const status = isAxiosError(error) ? error.response?.status : undefined;
+    setActionError(
+      status === 404
+        ? "This invitation is no longer available. Review the refreshed list before trying again."
+        : getErrorMessage(error, "Unable to update invitation."),
+    );
+    if (status === 404 || status === 409) {
+      await queryClient.invalidateQueries({ queryKey: ["invitations"] });
+    }
+  }
+
   const revokeMutation = useMutation({
     mutationFn: (invitationId: string) => revokeInvitation(invitationId),
+    onMutate: clearActionFeedback,
     onSuccess: (_result, invitationId) => {
       queryClient.setQueryData<Invitation[]>(["invitations"], (current = []) =>
         current.filter((invitation) => invitation.id !== invitationId),
       );
+      setActionMessage("Invitation revoked.");
     },
+    onError: handleActionError,
   });
 
   const reissueMutation = useMutation({
     mutationFn: (invitationId: string) => reissueInvitation(invitationId),
-    onSuccess: (updatedInvitation) => {
+    onMutate: clearActionFeedback,
+    onSuccess: (updatedInvitation, previousInvitationId) => {
       queryClient.setQueryData<Invitation[]>(["invitations"], (current = []) =>
         current.map((invitation) =>
-          invitation.id === updatedInvitation.id ? updatedInvitation : invitation,
+          invitation.id === previousInvitationId
+            ? updatedInvitation
+            : invitation,
         ),
       );
+      setActionMessage("Invitation renewed.");
     },
+    onError: handleActionError,
   });
 
   const invitations = invitationsQuery.data ?? [];
   const isSaving = createMutation.isPending;
+  const isActionPending = reissueMutation.isPending || revokeMutation.isPending;
 
   async function handleSubmit(payload: InvitationCreate) {
-    await createMutation.mutateAsync(payload);
+    createMutation.mutate(payload);
   }
 
   return (
@@ -107,6 +142,7 @@ export function InvitationsPage() {
         <Button
           variant="contained"
           onClick={() => {
+            clearActionFeedback();
             setFormError(null);
             setIsDialogOpen(true);
           }}
@@ -114,6 +150,9 @@ export function InvitationsPage() {
           New invitation
         </Button>
       </Stack>
+
+      {actionError && <Alert severity="error">{actionError}</Alert>}
+      {actionMessage && <Alert severity="success">{actionMessage}</Alert>}
 
       <Paper sx={{ p: 3 }}>
         {invitationsQuery.isLoading ? (
@@ -128,7 +167,9 @@ export function InvitationsPage() {
                 "Unable to load invitations.",
               )}
             </Typography>
-            <Button onClick={() => void invitationsQuery.refetch()}>Retry</Button>
+            <Button onClick={() => void invitationsQuery.refetch()}>
+              Retry
+            </Button>
           </Stack>
         ) : (
           <Table>
@@ -151,7 +192,10 @@ export function InvitationsPage() {
                     <TableCell>{invitation.email}</TableCell>
                     <TableCell>{invitation.role}</TableCell>
                     <TableCell>
-                      <Chip size="small" label={getInvitationState(invitation)} />
+                      <Chip
+                        size="small"
+                        label={getInvitationState(invitation)}
+                      />
                     </TableCell>
                     <TableCell>{formatDate(invitation.expires_at)}</TableCell>
                     <TableCell>{formatDate(invitation.created_at)}</TableCell>
@@ -162,15 +206,15 @@ export function InvitationsPage() {
                         justifyContent="flex-end"
                       >
                         <Button
-                          onClick={() => void reissueMutation.mutateAsync(invitation.id)}
-                          disabled={isClaimed || reissueMutation.isPending}
+                          onClick={() => reissueMutation.mutate(invitation.id)}
+                          disabled={isClaimed || isActionPending}
                         >
                           Reissue
                         </Button>
                         <Button
                           color="error"
-                          onClick={() => void revokeMutation.mutateAsync(invitation.id)}
-                          disabled={isClaimed || revokeMutation.isPending}
+                          onClick={() => revokeMutation.mutate(invitation.id)}
+                          disabled={isClaimed || isActionPending}
                         >
                           Revoke
                         </Button>
